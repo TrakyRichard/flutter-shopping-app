@@ -12,16 +12,17 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-        title: 'Shopping App',
-        debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-            brightness: Brightness.dark,
-            primaryColor: Colors.cyan[300],
-            accentColor: Colors.cyan[900],
-            textTheme: TextTheme(
-              headline6: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            )),
-        routes: routes,
-        home: RegisterPage());
+      title: 'Shopping App',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+          brightness: Brightness.dark,
+          primaryColor: Colors.cyan[300],
+          accentColor: Colors.cyan[900],
+          textTheme: TextTheme(
+            headline6: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          )),
+      routes: routes,
+      initialRoute: "/register",
+    );
   }
 }

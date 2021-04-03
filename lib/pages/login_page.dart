@@ -1,9 +1,11 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:shopping/Widgets/AppBar.dart';
 import 'package:shopping/Widgets/Buttons.dart';
 import 'package:shopping/Widgets/TextField.dart';
 import 'package:shopping/Widgets/TextTitle.dart';
-import 'package:shopping/pages/register_page.dart';
+import 'package:http/http.dart' as http;
 
 class LoginPage extends StatefulWidget {
   @override
@@ -13,14 +15,66 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   String _email, _password;
-  bool _isObsur = true;
+  bool _isSubmitting = false, _isObsur = true;
+
+  void _snackBar({Color color, Widget child}) {
+    final snackbar = SnackBar(
+        backgroundColor: color,
+        content: Container(
+          height: 32.0,
+          decoration: BoxDecoration(),
+          child: child,
+        ));
+    ScaffoldMessenger.of(context).showSnackBar(snackbar);
+
+    // _scaffoldKey.currentState.showSnackBar(snackbar);
+  }
+
+  void _registerUser() async {
+    var url = Uri.parse("http://localhost:4242/auth/local");
+    setState(() {
+      _isSubmitting = true;
+    });
+    final response = await http.post(url, body: {
+      "identifier": _email,
+      "password": _password,
+    });
+
+    // print(response.statusCode);
+    final dynamic responseBody = await json.decode(response.body);
+    if (response.statusCode == 200) {
+      // print("Respnse Body" + responseBody.data.toString());
+      _snackBar(
+          child: Text("Welcome back to shopping",
+              style: TextStyle(color: Colors.white)),
+          color: Colors.green);
+      setState(() {
+        _isSubmitting = false;
+        _email = _password = "";
+      });
+      return Future.delayed(Duration(seconds: 2), () {
+        return Navigator.pushReplacementNamed(context, "/products");
+      });
+    } else if (response.statusCode != 200) {
+      dynamic errMsg = responseBody["message"];
+      // print("My errorr" + errMsg);
+
+      _snackBar(
+          child: Text(errMsg.toString(), style: TextStyle(color: Colors.white)),
+          color: Colors.redAccent);
+      setState(() {
+        _isSubmitting = false;
+        _email = _password = "";
+      });
+      // throw Exception("Error logging: $errMsg, $responseBody");
+    }
+  }
 
   void _onSubmit() {
     final form = _formKey.currentState;
     if (form.validate()) {
       form.save();
-      print(
-          "This form is saved with email: $_email, and password: $_password,");
+      _registerUser();
     } else {
       print("Not validated yet");
     }
@@ -41,7 +95,7 @@ class _LoginPageState extends State<LoginPage> {
                     textTitle(context: context, title: "Login"),
                     TextFormWidget(
                       hintText: "Your email",
-                      onSaved: (val) => val = _email,
+                      onSaved: (val) => _email = val,
                       iconData: Icons.email,
                       suffix: SizedBox.shrink(),
                       labelText: "Email",
@@ -70,7 +124,12 @@ class _LoginPageState extends State<LoginPage> {
                     SizedBox(
                       height: 20,
                     ),
-                    submitButton(function: _onSubmit),
+                    _isSubmitting
+                        ? CircularProgressIndicator(
+                            valueColor: AlwaysStoppedAnimation(
+                            Theme.of(context).accentColor,
+                          ))
+                        : submitButton(function: _onSubmit),
                     SizedBox(
                       height: 80,
                     ),
